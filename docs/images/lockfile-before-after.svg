@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="715" height="200" viewBox="0 0 715 200" role="img" aria-label="Generating the missing packages.lock.json">
+  <style>
+    text { font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; white-space: pre; }
+    .out { fill: #e6edf3; } .prompt { fill: #7ee787; } .warn { fill: #e3b341; } .dim { fill: #8b949e; } .title { fill: #8b949e; font-size: 12px; }
+  </style>
+  <rect width="715" height="200" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <rect width="715" height="30" rx="8" fill="#161b22"/>
+  <rect y="22" width="715" height="8" fill="#161b22"/>
+  <circle cx="18" cy="15" r="6" fill="#ff5f56"/><circle cx="38" cy="15" r="6" fill="#ffbd2e"/><circle cx="58" cy="15" r="6" fill="#27c93f"/>
+  <text class="title" x="358" y="19" text-anchor="middle">Generating the missing packages.lock.json</text>
+  <text class="prompt" x="16" y="57" xml:space="preserve">PS&gt; .\scripts\New-LockFile.ps1 -Source .\fixtures\ecosystems\cs-csproj-only</text>
+  <text class="prompt" x="16" y="75" xml:space="preserve">PS&gt; .\scripts\Invoke-TrivyScan.ps1 -Target .\workspace\cs-csproj-only-locked -Method fs</text>
+  <text class="prompt" x="16" y="93" xml:space="preserve">PS&gt; .\scripts\Convert-Report.ps1 -Path &lt;before&gt;, &lt;after&gt;</text>
+  <text class="out" x="16" y="111" xml:space="preserve"></text>
+  <text class="out" x="16" y="129" xml:space="preserve">Report             DepFiles Vulns CRITICAL HIGH MEDIUM LOW</text>
+  <text class="dim" x="16" y="147" xml:space="preserve">------             -------- ----- -------- ---- ------ ---</text>
+  <text class="out" x="16" y="165" xml:space="preserve">csproj-only               0     0        0    0      0   0</text>
+  <text class="out" x="16" y="183" xml:space="preserve">csproj-only-locked        1    11        1    5      5   0</text>
+</svg>

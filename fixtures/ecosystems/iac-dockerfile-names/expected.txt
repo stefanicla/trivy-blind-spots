@@ -1,0 +1,5 @@
+Dockerfile misconfig
+Containerfile misconfig
+Dockerfile.prod misconfig
+api.Dockerfile misconfig
+web.dockerfile misconfig

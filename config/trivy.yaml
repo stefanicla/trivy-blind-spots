@@ -1,0 +1,44 @@
+# Shared Trivy defaults for this PoC.
+# Key names verified against `trivy repo --generate-default-config` (Trivy 0.76.1).
+# The scan scripts pass --cache-dir, --ignorefile and --output explicitly, so the
+# values here are only the behavioural defaults. CLI flags override this file.
+
+timeout: 15m0s
+
+# Keep every package in the JSON report so that SBOM conversion and
+# dependency analysis work from a single scan.
+list-all-pkgs: true
+
+scan:
+  # Scanners enabled by default for `trivy repo` / `trivy fs`.
+  # Override per run with -Scanners (e.g. vuln,secret,misconfig,license).
+  scanners:
+    - vuln
+    - secret
+  # Trivy only reads pip files named exactly "requirements.txt". These patterns also pick
+  # up requirements-dev.txt, requirements_prod.txt, requirements/base.txt, etc. (verified).
+  file-patterns:
+    - 'pip:(^|/)[^/]*requirements[^/]*\.txt$'
+    - 'pip:(^|/)requirements/[^/]+\.txt$'
+  # Do not send usage telemetry or call home for version checks.
+  disable-telemetry: true
+  skip-version-check: true
+
+# Report all severities; filter at reporting time or per run with -Severity.
+severity:
+  - UNKNOWN
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+# Do NOT add "yaml" to misconfiguration.scanners here: combined with custom checks it makes
+# Trivy classify Kubernetes manifests as plain YAML and drop all Kubernetes findings.
+# The Docker Compose checks (config/checks/compose.rego) run in a separate pass instead,
+# see Invoke-TrivyScan.ps1 and Invoke-CoverageMatrix.ps1.
+
+vulnerability:
+  ignore-unfixed: false
+
+pkg:
+  include-dev-deps: false

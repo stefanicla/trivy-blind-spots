@@ -1,0 +1,37 @@
+# Scan targets for Invoke-TrivyBulk.ps1
+# Format: <URL or local path> [method] [extra Trivy arguments...]   (method defaults to "repo")
+# Local paths are relative to the repository root.
+# In scope: C#, Python, JavaScript/TypeScript (Node), Terraform, Dockerfile, Docker Compose,
+# Kubernetes/Helm. Java is out of scope. Run with -Scanners vuln,secret,misconfig.
+
+# --- C# / .NET
+# Deliberately vulnerable; .csproj PackageReference only (no lock file)
+https://github.com/tobyash86/WebGoat.NET
+https://github.com/appsecco/dvcsharp-api
+# Real-world reference projects using Central Package Management (Directory.Packages.props)
+https://github.com/dotnet/eShop
+https://github.com/jasontaylordev/CleanArchitecture
+
+# --- Python
+https://github.com/adeyosemanputra/pygoat
+https://github.com/we45/Vulnerable-Flask-App
+# uv.lock + bun.lock, Dockerfiles, Compose
+https://github.com/fastapi/full-stack-fastapi-template
+
+# --- JavaScript / TypeScript
+https://github.com/OWASP/NodeGoat
+https://github.com/snyk-labs/nodejs-goof
+# TypeScript; does not commit a lock file (.npmrc package-lock=false)
+https://github.com/juice-shop/juice-shop
+
+# --- Infrastructure as code
+# Terraform; packages/ holds dependency samples (incl. Maven) that are out of scope
+https://github.com/bridgecrewio/terragoat  repo  --skip-dirs  packages
+# Kubernetes manifests and Helm charts
+https://github.com/madhuakula/kubernetes-goat
+
+# --- Local known-answer fixtures
+# fixtures/ecosystems reports 0 secrets here: its fake token is only injected at runtime
+# by Invoke-CoverageMatrix.ps1. workspace/fixture-local is created by New-Fixture.ps1.
+workspace/fixture-local
+fixtures/ecosystems  fs

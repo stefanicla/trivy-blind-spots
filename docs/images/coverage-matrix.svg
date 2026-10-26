@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="731" height="668" viewBox="0 0 731 668" role="img" aria-label="Ecosystem coverage matrix (found / expected)">
+  <style>
+    text { font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; white-space: pre; }
+    .out { fill: #e6edf3; } .prompt { fill: #7ee787; } .warn { fill: #e3b341; } .dim { fill: #8b949e; } .title { fill: #8b949e; font-size: 12px; }
+  </style>
+  <rect width="731" height="668" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <rect width="731" height="30" rx="8" fill="#161b22"/>
+  <rect y="22" width="731" height="8" fill="#161b22"/>
+  <circle cx="18" cy="15" r="6" fill="#ff5f56"/><circle cx="38" cy="15" r="6" fill="#ffbd2e"/><circle cx="58" cy="15" r="6" fill="#27c93f"/>
+  <text class="title" x="366" y="19" text-anchor="middle">Ecosystem coverage matrix (found / expected)</text>
+  <text class="prompt" x="16" y="57" xml:space="preserve">PS&gt; .\scripts\Invoke-CoverageMatrix.ps1</text>
+  <text class="out" x="16" y="75" xml:space="preserve"></text>
+  <text class="out" x="16" y="93" xml:space="preserve">Case                     Variant DepFiles Packages Direct Transitive Dev Misconfig Secret</text>
+  <text class="dim" x="16" y="111" xml:space="preserve">----                     ------- -------- -------- ------ ---------- --- --------- ------</text>
+  <text class="out" x="16" y="129" xml:space="preserve">cs-cpm-lock              default        2       51 4/4    1/1                      </text>
+  <text class="out" x="16" y="147" xml:space="preserve">cs-cpm-props             default        1        4 4/4    0/1                      </text>
+  <text class="out" x="16" y="165" xml:space="preserve">cs-csproj-only           default        0        0 0/4    0/1                      </text>
+  <text class="out" x="16" y="183" xml:space="preserve">cs-packages-config       default        1        4 4/4    0/1                      </text>
+  <text class="out" x="16" y="201" xml:space="preserve">cs-packages-lock         default        1       47 4/4    1/1                      </text>
+  <text class="out" x="16" y="219" xml:space="preserve">iac-compose              default        0        0                       2/2       1/1</text>
+  <text class="out" x="16" y="237" xml:space="preserve">iac-dockerfile-names     default        0        0                       5/5       </text>
+  <text class="out" x="16" y="255" xml:space="preserve">iac-helm                 default        0        0                       1/1       </text>
+  <text class="out" x="16" y="273" xml:space="preserve">iac-kubernetes           default        0        0                       1/1       </text>
+  <text class="out" x="16" y="291" xml:space="preserve">iac-terraform            default        0        0                       1/1       </text>
+  <text class="out" x="16" y="309" xml:space="preserve">node-bun-lock            default        1       53 4/4    2/2        0/1           </text>
+  <text class="out" x="16" y="327" xml:space="preserve">node-bun-lock            maximum        1       77 4/4    2/2        1/1           </text>
+  <text class="out" x="16" y="345" xml:space="preserve">node-npm-lock            default        1       54 4/4    2/2        0/1           </text>
+  <text class="out" x="16" y="363" xml:space="preserve">node-npm-lock            maximum        1       78 4/4    2/2        1/1           </text>
+  <text class="out" x="16" y="381" xml:space="preserve">node-package-json-only   default        0        0 0/4    0/2        0/1           </text>
+  <text class="out" x="16" y="399" xml:space="preserve">node-pnpm-lock           default        1       56 4/4    2/2        0/1           </text>
+  <text class="out" x="16" y="417" xml:space="preserve">node-pnpm-lock           maximum        1       80 4/4    2/2        1/1           </text>
+  <text class="out" x="16" y="435" xml:space="preserve">node-yarn-berry          default        1       57 4/4    2/2        0/1           </text>
+  <text class="out" x="16" y="453" xml:space="preserve">node-yarn-berry          maximum        1       81 4/4    2/2        1/1           </text>
+  <text class="out" x="16" y="471" xml:space="preserve">node-yarn-classic        default        1       74 4/4    2/2        0/1           </text>
+  <text class="out" x="16" y="489" xml:space="preserve">node-yarn-classic        maximum        1       81 4/4    2/2        1/1           </text>
+  <text class="out" x="16" y="507" xml:space="preserve">py-pipenv-lock           default        1       14 4/4    1/1                      </text>
+  <text class="out" x="16" y="525" xml:space="preserve">py-poetry-lock           default        1       14 4/4    1/1                      </text>
+  <text class="out" x="16" y="543" xml:space="preserve">py-pyproject-only        default        0        0 0/4    0/1                      </text>
+  <text class="out" x="16" y="561" xml:space="preserve">py-requirements-compiled default        1       14 4/4    1/1                      </text>
+  <text class="out" x="16" y="579" xml:space="preserve">py-requirements-names    default        3        4 4/4                             </text>
+  <text class="out" x="16" y="597" xml:space="preserve">py-requirements-pinned   default        1        4 4/4    0/1                      </text>
+  <text class="out" x="16" y="615" xml:space="preserve">py-requirements-ranges   default        0        0 0/4    0/1                      </text>
+  <text class="out" x="16" y="633" xml:space="preserve">py-requirements-ranges   maximum        1        4 4/4    0/1                      </text>
+  <text class="out" x="16" y="651" xml:space="preserve">py-uv-lock               default        1       15 4/4    1/1</text>
+</svg>

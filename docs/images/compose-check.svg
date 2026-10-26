@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="896" height="290" viewBox="0 0 896 290" role="img" aria-label="Docker Compose: custom Rego check">
+  <style>
+    text { font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; white-space: pre; }
+    .out { fill: #e6edf3; } .prompt { fill: #7ee787; } .warn { fill: #e3b341; } .dim { fill: #8b949e; } .title { fill: #8b949e; font-size: 12px; }
+  </style>
+  <rect width="896" height="290" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <rect width="896" height="30" rx="8" fill="#161b22"/>
+  <rect y="22" width="896" height="8" fill="#161b22"/>
+  <circle cx="18" cy="15" r="6" fill="#ff5f56"/><circle cx="38" cy="15" r="6" fill="#ffbd2e"/><circle cx="58" cy="15" r="6" fill="#27c93f"/>
+  <text class="title" x="448" y="19" text-anchor="middle">Docker Compose: custom Rego check</text>
+  <text class="prompt" x="16" y="57" xml:space="preserve">PS&gt; .\scripts\Invoke-TrivyScan.ps1 -Target .\fixtures\ecosystems\iac-compose -Method fs -Scanners misconfig</text>
+  <text class="prompt" x="16" y="75" xml:space="preserve">PS&gt; # CMP-0001 findings from config/checks/compose.rego</text>
+  <text class="out" x="16" y="93" xml:space="preserve"></text>
+  <text class="out" x="16" y="111" xml:space="preserve">compose.yaml         CMP-0001  Service &apos;db&apos; adds the dangerous capability ALL</text>
+  <text class="out" x="16" y="129" xml:space="preserve">compose.yaml         CMP-0001  Service &apos;db&apos; runs in privileged mode</text>
+  <text class="out" x="16" y="147" xml:space="preserve">compose.yaml         CMP-0001  Service &apos;db&apos; uses the &apos;:latest&apos; image tag</text>
+  <text class="out" x="16" y="165" xml:space="preserve">docker-compose.yml   CMP-0001  Service &apos;web&apos; hard-codes a credential in environment variable GITHUB_TOKEN</text>
+  <text class="out" x="16" y="183" xml:space="preserve">docker-compose.yml   CMP-0001  Service &apos;web&apos; hard-codes a credential in environment variable POSTGRES_PASSWORD</text>
+  <text class="out" x="16" y="201" xml:space="preserve">docker-compose.yml   CMP-0001  Service &apos;web&apos; mounts the Docker socket</text>
+  <text class="out" x="16" y="219" xml:space="preserve">docker-compose.yml   CMP-0001  Service &apos;web&apos; runs as root</text>
+  <text class="out" x="16" y="237" xml:space="preserve">docker-compose.yml   CMP-0001  Service &apos;web&apos; runs in privileged mode</text>
+  <text class="out" x="16" y="255" xml:space="preserve">docker-compose.yml   CMP-0001  Service &apos;web&apos; shares the host network_mode namespace</text>
+  <text class="out" x="16" y="273" xml:space="preserve">docker-compose.yml   CMP-0001  Service &apos;web&apos; uses the &apos;:latest&apos; image tag</text>
+</svg>

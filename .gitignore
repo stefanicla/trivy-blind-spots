@@ -1,0 +1,27 @@
+# Pinned Trivy binary (re-created by scripts/Install-Trivy.ps1)
+tools/*
+!tools/.gitkeep
+
+# Cloned scan targets - untrusted third-party code
+workspace/*
+!workspace/.gitkeep
+
+# Scan outputs, including coverage-matrix copies with injected fake tokens
+reports/*
+!reports/.gitkeep
+
+# Trivy cache (vulnerability DB, scan cache)
+cache/
+
+# Temporary files written by the scripts
+*.tmp.json
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+.idea/
+.vscode/*
+!.vscode/extensions.json

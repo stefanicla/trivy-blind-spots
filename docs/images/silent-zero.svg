@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="128" viewBox="0 0 880 128" role="img" aria-label="A .csproj-only project: 0 vulnerabilities means &quot;not assessed&quot;">
+  <style>
+    text { font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; white-space: pre; }
+    .out { fill: #e6edf3; } .prompt { fill: #7ee787; } .warn { fill: #e3b341; } .dim { fill: #8b949e; } .title { fill: #8b949e; font-size: 12px; }
+  </style>
+  <rect width="880" height="128" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <rect width="880" height="30" rx="8" fill="#161b22"/>
+  <rect y="22" width="880" height="8" fill="#161b22"/>
+  <circle cx="18" cy="15" r="6" fill="#ff5f56"/><circle cx="38" cy="15" r="6" fill="#ffbd2e"/><circle cx="58" cy="15" r="6" fill="#27c93f"/>
+  <text class="title" x="440" y="19" text-anchor="middle">A .csproj-only project: 0 vulnerabilities means &quot;not assessed&quot;</text>
+  <text class="prompt" x="16" y="57" xml:space="preserve">PS&gt; .\scripts\Invoke-TrivyScan.ps1 -Target .\fixtures\ecosystems\cs-csproj-only -Method fs -Name csproj-only</text>
+  <text class="warn" x="16" y="75" xml:space="preserve">WARNING: No dependency lock files or manifests were analysed. A result of 0 vulnerabilities means &quot;not</text>
+  <text class="warn" x="16" y="93" xml:space="preserve">    assessed&quot;, not &quot;clean&quot;. Check for missing lock files (see docs/methods.md).</text>
+  <text class="out" x="16" y="111" xml:space="preserve">Done in 0.1s, exit code 0. Report: .\reports\csproj-only_fs_20261026T121153Z.json</text>
+</svg>

@@ -1,0 +1,16 @@
+# Documented, time-boxed suppressions, passed to Trivy with --ignorefile.
+# Every entry must have a statement (why) and an expired_at date (when to re-review).
+# Reference: https://trivy.dev/docs/latest/configuration/filtering/
+#
+# Example:
+# vulnerabilities:
+#   - id: CVE-2023-12345
+#     paths:
+#       - "package-lock.json"
+#     statement: "Not reachable: the vulnerable function is never called. Reviewed by <name>."
+#     expired_at: 2026-12-31
+
+vulnerabilities: []
+secrets: []
+misconfigurations: []
+licenses: []

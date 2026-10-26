@@ -1,0 +1,7 @@
+lodash direct
+minimist direct
+axios direct
+express direct
+qs transitive
+path-to-regexp transitive
+handlebars dev

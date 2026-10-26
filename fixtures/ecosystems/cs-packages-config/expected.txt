@@ -1,0 +1,5 @@
+Newtonsoft.Json direct
+System.Text.Encodings.Web direct
+System.Data.SqlClient direct
+Microsoft.Data.SqlClient direct
+Azure.Identity transitive

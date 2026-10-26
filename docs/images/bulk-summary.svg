@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="621" height="362" viewBox="0 0 621 362" role="img" aria-label="Real repositories: C#, Python, Node/TS, IaC">
+  <style>
+    text { font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; white-space: pre; }
+    .out { fill: #e6edf3; } .prompt { fill: #7ee787; } .warn { fill: #e3b341; } .dim { fill: #8b949e; } .title { fill: #8b949e; font-size: 12px; }
+  </style>
+  <rect width="621" height="362" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <rect width="621" height="30" rx="8" fill="#161b22"/>
+  <rect y="22" width="621" height="8" fill="#161b22"/>
+  <circle cx="18" cy="15" r="6" fill="#ff5f56"/><circle cx="38" cy="15" r="6" fill="#ffbd2e"/><circle cx="58" cy="15" r="6" fill="#27c93f"/>
+  <text class="title" x="310" y="19" text-anchor="middle">Real repositories: C#, Python, Node/TS, IaC</text>
+  <text class="prompt" x="16" y="57" xml:space="preserve">PS&gt; .\scripts\Invoke-TrivyBulk.ps1 -Scanners vuln,secret,misconfig</text>
+  <text class="prompt" x="16" y="75" xml:space="preserve">PS&gt; .\scripts\Convert-Report.ps1 -Path &lt;latest reports&gt;</text>
+  <text class="out" x="16" y="93" xml:space="preserve"></text>
+  <text class="out" x="16" y="111" xml:space="preserve">Repository                  DepFiles Vulns CRITICAL HIGH Secrets Misconfigs</text>
+  <text class="dim" x="16" y="129" xml:space="preserve">----------                  -------- ----- -------- ---- ------- ----------</text>
+  <text class="out" x="16" y="147" xml:space="preserve">CleanArchitecture                  3     0        0    0       0          0</text>
+  <text class="out" x="16" y="165" xml:space="preserve">dvcsharp-api                       0     0        0    0       9          3</text>
+  <text class="out" x="16" y="183" xml:space="preserve">eShop                              1     0        0    0       0          0</text>
+  <text class="out" x="16" y="201" xml:space="preserve">full-stack-fastapi-template        2    19        1   12       0          8</text>
+  <text class="out" x="16" y="219" xml:space="preserve">juice-shop                         0     0        0    0       5         95</text>
+  <text class="out" x="16" y="237" xml:space="preserve">kubernetes-goat                    6   159        6   73       0        373</text>
+  <text class="out" x="16" y="255" xml:space="preserve">NodeGoat                           1    92       12   47       1          1</text>
+  <text class="out" x="16" y="273" xml:space="preserve">nodejs-goof                        1   243       37  107       0          3</text>
+  <text class="out" x="16" y="291" xml:space="preserve">pygoat                            24   568       27  173       4         57</text>
+  <text class="out" x="16" y="309" xml:space="preserve">terragoat                          1    20        0   15       2        253</text>
+  <text class="out" x="16" y="327" xml:space="preserve">Vulnerable-Flask-App               1    81        7   32       0          2</text>
+  <text class="out" x="16" y="345" xml:space="preserve">WebGoat.NET                        0     0        0    0       0          4</text>
+</svg>
