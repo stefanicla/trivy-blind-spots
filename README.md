@@ -54,7 +54,7 @@ what it silently misses, and how to close the gaps.
 
 ## What the lab does
 
-| | |
+| Aspect | Details |
 |---|---|
 | **Goal** | Decide whether Trivy is fit for assessing whole repositories, and how to use it |
 | **Ingestion methods** | Local Git folder, remote URL (branch / tag / commit), filesystem, manual clone, SBOM round-trip, container, client/server, bulk (targets file or GitHub organisation), offline |
