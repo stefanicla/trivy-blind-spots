@@ -65,49 +65,7 @@ what it silently misses, and how to close the gaps.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph Inputs
-        T[targets/targets.txt]
-        F[fixtures/ecosystems<br/>known-answer cases]
-        W[workspace/<br/>clones · untrusted]
-        GH[(GitHub / GitLab<br/>remote repos)]
-    end
-
-    subgraph Scripts["scripts/ (PowerShell)"]
-        B[Invoke-TrivyBulk]
-        S[Invoke-TrivyScan]
-        M[Invoke-CoverageMatrix]
-        L[New-LockFile]
-        C[Convert-Report]
-    end
-
-    subgraph Config["config/"]
-        Y[trivy.yaml]
-        I[trivyignore.yaml]
-        R[checks/compose.rego]
-    end
-
-    subgraph Trivy["Trivy 0.76.1 (pinned)"]
-        N[native binary<br/>SHA-256 verified]
-        D[container<br/>pinned by digest]
-        SV[client/server]
-    end
-
-    O[reports/<br/>JSON · meta · SARIF · SBOM]
-
-    T --> B --> S
-    F --> M
-    W --> S
-    GH --> S
-    L -->|hardened containers| W
-    Config --> S
-    Config --> M
-    S --> N & D & SV
-    M --> N
-    N & D & SV --> O
-    O --> C
-```
+![Architecture: inputs flow through PowerShell automation into a pinned, checksum-verified Trivy, producing JSON reports with metadata and derived SARIF/SBOM](docs/images/architecture.svg)
 
 What a single `Invoke-TrivyScan.ps1` run does:
 

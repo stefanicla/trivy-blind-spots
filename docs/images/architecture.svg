@@ -1,0 +1,297 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="690" viewBox="0 0 1200 690" role="img" aria-label="Lab architecture: repositories flow through PowerShell automation into a pinned, verified Trivy, producing JSON reports with metadata and derived SARIF, SBOM and table formats">
+  <title>Trivy blind spots: lab architecture</title>
+  <desc>Four stages. 1 What we scan: target list, remote repositories, local clones (untrusted), known-answer fixtures. 2 Lab automation: bulk scan, single-repository scan, lock-file generator in a hardened container, coverage matrix, all driven by the lab policy in config/. 3 Pinned scanner: Trivy 0.76.1 as a SHA-256 verified native binary, a digest-pinned container or client/server, running vulnerability, secret, misconfiguration and licence scanners. 4 Evidence: a JSON report plus .meta.json, converted without re-scanning to SARIF, SBOM and table.</desc>
+  <style>
+    .sans { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; }
+    .h1 { font-size: 21px; font-weight: 700; fill: #e6edf3; }
+    .sub { font-size: 12.5px; fill: #8b949e; }
+    .stage { font-size: 12px; font-weight: 700; letter-spacing: 1.4px; }
+    .stagesub { font-size: 11px; fill: #8b949e; }
+    .num { font-size: 12px; font-weight: 700; text-anchor: middle; }
+    .t { font-size: 13.5px; font-weight: 600; fill: #e6edf3; }
+    .tb { font-size: 15px; font-weight: 700; fill: #e6edf3; }
+    .ts { font-size: 12.5px; font-weight: 600; fill: #e6edf3; }
+    .m { font-size: 11px; fill: #c9d1d9; }
+    .d { font-size: 11px; fill: #8b949e; }
+    .ds { font-size: 10.5px; fill: #8b949e; }
+    .lbl { font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; fill: #6e7681; }
+    .card { fill: #161b22; stroke: #30363d; }
+    .inner { fill: #0d1117; stroke: #30363d; }
+    .flow { fill: none; stroke-width: 1.8; stroke-dasharray: 5 5; animation: flow 0.9s linear infinite; }
+    .pulse { animation: pulse 2.4s ease-in-out infinite alternate; }
+    @keyframes flow { to { stroke-dashoffset: -10; } }
+    @keyframes pulse { from { opacity: 0.15; } to { opacity: 0.55; } }
+    @media (prefers-reduced-motion: reduce) { .flow, .pulse { animation: none; } }
+  </style>
+  <defs>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#1c2128"/></pattern>
+    <filter id="blur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="6"/></filter>
+    <linearGradient id="rule" x1="0" x2="1"><stop offset="0" stop-color="#58a6ff"/><stop offset="0.35" stop-color="#d2a8ff"/><stop offset="0.7" stop-color="#39c5cf"/><stop offset="1" stop-color="#7ee787"/></linearGradient>
+    <marker id="a-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#58a6ff"/></marker>
+    <marker id="a-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ff7b72"/></marker>
+    <marker id="a-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#d2a8ff"/></marker>
+    <marker id="a-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#39c5cf"/></marker>
+    <marker id="a-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e3b341"/></marker>
+    <marker id="a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7ee787"/></marker>
+
+    <!-- Icons (24x24, stroke = currentColor) -->
+    <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6L4.6 18.4A2 2 0 0 0 6.3 21.5h11.4a2 2 0 0 0 1.7-3.1L14 9V3"/><path d="M7.2 15h9.6"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+    <symbol id="i-tool" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><polyline points="15 17.5 17 19.5 21 15"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+    <symbol id="i-shield-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="1200" height="690" rx="12" fill="#0d1117"/>
+  <rect width="1200" height="690" rx="12" fill="url(#dots)"/>
+  <rect x="0.5" y="0.5" width="1199" height="689" rx="12" fill="none" stroke="#30363d"/>
+
+  <!-- Header -->
+  <text class="sans h1" x="30" y="44">How the lab turns a repository into auditable evidence</text>
+  <text class="sans sub" x="30" y="64">Trivy blind spots · architecture overview</text>
+  <rect x="30" y="72" width="1140" height="2" rx="1" fill="url(#rule)" opacity="0.6"/>
+  <path class="flow" d="M890,40 L922,40" stroke="#58a6ff" marker-end="url(#a-blue)"/>
+  <text class="sans d" x="930" y="44">data flow</text>
+  <rect x="1000" y="33" width="22" height="14" rx="3" fill="#ff7b72" fill-opacity="0.08" stroke="#ff7b72" stroke-dasharray="4 3"/>
+  <text class="sans d" x="1030" y="44">untrusted content</text>
+
+  <!-- Stage headers -->
+  <g class="sans">
+    <circle cx="42" cy="93" r="11" fill="#58a6ff" fill-opacity="0.15" stroke="#58a6ff"/><text class="num" x="42" y="97" fill="#58a6ff">1</text>
+    <text class="stage" x="60" y="97" fill="#58a6ff">WHAT WE SCAN</text>
+    <text class="stagesub" x="60" y="112">repositories, in any form</text>
+
+    <circle cx="342" cy="93" r="11" fill="#d2a8ff" fill-opacity="0.15" stroke="#d2a8ff"/><text class="num" x="342" y="97" fill="#d2a8ff">2</text>
+    <text class="stage" x="360" y="97" fill="#d2a8ff">LAB AUTOMATION</text>
+    <text class="stagesub" x="360" y="112">PowerShell 7 scripts</text>
+
+    <circle cx="672" cy="93" r="11" fill="#39c5cf" fill-opacity="0.15" stroke="#39c5cf"/><text class="num" x="672" y="97" fill="#39c5cf">3</text>
+    <text class="stage" x="690" y="97" fill="#39c5cf">PINNED SCANNER</text>
+    <text class="stagesub" x="690" y="112">Trivy, verified before every use</text>
+
+    <circle cx="972" cy="93" r="11" fill="#7ee787" fill-opacity="0.15" stroke="#7ee787"/><text class="num" x="972" y="97" fill="#7ee787">4</text>
+    <text class="stage" x="990" y="97" fill="#7ee787">EVIDENCE</text>
+    <text class="stagesub" x="990" y="112">comparable, re-usable reports</text>
+  </g>
+
+  <!-- ============ Column 1: inputs ============ -->
+  <g class="sans">
+    <!-- Target list -->
+    <rect class="card" x="30" y="125" width="230" height="78" rx="10"/>
+    <rect x="44" y="139" width="36" height="36" rx="8" fill="#58a6ff" fill-opacity="0.14"/>
+    <use href="#i-list" x="52" y="147" width="20" height="20" color="#58a6ff"/>
+    <text class="t" x="92" y="153">Target list</text>
+    <text class="mono m" x="92" y="171">targets/targets.txt</text>
+    <text class="d" x="92" y="188">repos to scan in bulk</text>
+
+    <!-- Remote repos -->
+    <rect class="card" x="30" y="217" width="230" height="78" rx="10"/>
+    <rect x="44" y="231" width="36" height="36" rx="8" fill="#58a6ff" fill-opacity="0.14"/>
+    <use href="#i-cloud" x="52" y="239" width="20" height="20" color="#58a6ff"/>
+    <text class="t" x="92" y="245">Remote repositories</text>
+    <text class="mono m" x="92" y="263">GitHub · GitLab URL</text>
+    <text class="d" x="92" y="280">any branch, tag or commit</text>
+
+    <!-- Local clones (untrusted) -->
+    <rect x="30" y="309" width="230" height="78" rx="10" fill="#1a1517" stroke="#ff7b72" stroke-dasharray="6 4"/>
+    <rect x="44" y="323" width="36" height="36" rx="8" fill="#ff7b72" fill-opacity="0.14"/>
+    <use href="#i-folder" x="52" y="331" width="20" height="20" color="#ff7b72"/>
+    <text class="t" x="92" y="337">Local clones</text>
+    <rect x="180" y="324" width="70" height="18" rx="9" fill="#ff7b72" fill-opacity="0.15" stroke="#ff7b72" stroke-opacity="0.6"/>
+    <text x="215" y="337" text-anchor="middle" font-size="9.5" font-weight="700" letter-spacing="0.8" fill="#ff7b72">UNTRUSTED</text>
+    <text class="mono m" x="92" y="355">workspace/</text>
+    <text class="d" x="92" y="372">read only, never executed</text>
+
+    <!-- Fixtures -->
+    <rect class="card" x="30" y="401" width="230" height="78" rx="10"/>
+    <rect x="44" y="415" width="36" height="36" rx="8" fill="#58a6ff" fill-opacity="0.14"/>
+    <use href="#i-flask" x="52" y="423" width="20" height="20" color="#58a6ff"/>
+    <text class="t" x="92" y="429">Test fixtures</text>
+    <text class="mono m" x="92" y="447">fixtures/ecosystems</text>
+    <text class="d" x="92" y="464">known expected answers</text>
+  </g>
+
+  <!-- ============ Column 2: automation ============ -->
+  <g class="sans">
+    <!-- Bulk -->
+    <rect class="card" x="330" y="125" width="260" height="70" rx="10"/>
+    <rect x="344" y="139" width="36" height="36" rx="8" fill="#d2a8ff" fill-opacity="0.14"/>
+    <use href="#i-layers" x="352" y="147" width="20" height="20" color="#d2a8ff"/>
+    <text class="t" x="392" y="152">Bulk scan</text>
+    <text class="mono m" x="392" y="169">Invoke-TrivyBulk</text>
+    <text class="d" x="392" y="186">many repos, or a whole GitHub org</text>
+
+    <!-- Single scan (hub) -->
+    <rect class="pulse" x="330" y="215" width="260" height="120" rx="12" fill="none" stroke="#d2a8ff" stroke-width="6" filter="url(#blur)"/>
+    <rect x="330" y="215" width="260" height="120" rx="12" fill="#1b1726" stroke="#d2a8ff" stroke-width="1.5"/>
+    <rect x="344" y="229" width="38" height="38" rx="9" fill="#d2a8ff" fill-opacity="0.2"/>
+    <use href="#i-search" x="352" y="237" width="22" height="22" color="#d2a8ff"/>
+    <text class="tb" x="394" y="245">Single-repository scan</text>
+    <text class="mono m" x="394" y="262">Invoke-TrivyScan</text>
+    <circle cx="350" cy="286" r="2.5" fill="#d2a8ff"/><text class="d" x="360" y="290">one repository, every scanner at once</text>
+    <circle cx="350" cy="303" r="2.5" fill="#d2a8ff"/><text class="d" x="360" y="307">flags “0 found” when nothing was read</text>
+    <circle cx="350" cy="320" r="2.5" fill="#d2a8ff"/><text class="d" x="360" y="324">writes the report + run metadata</text>
+
+    <!-- Lock-file generator -->
+    <rect class="card" x="330" y="352" width="260" height="66" rx="10"/>
+    <rect x="344" y="367" width="36" height="36" rx="8" fill="#e3b341" fill-opacity="0.14"/>
+    <use href="#i-tool" x="352" y="375" width="20" height="20" color="#e3b341"/>
+    <text class="t" x="392" y="378">Lock-file generator</text>
+    <text class="mono m" x="392" y="395">New-LockFile</text>
+    <text class="d" x="392" y="410">hardened throw-away container</text>
+
+    <!-- Coverage matrix -->
+    <rect class="card" x="330" y="432" width="260" height="70" rx="10"/>
+    <rect x="344" y="449" width="36" height="36" rx="8" fill="#d2a8ff" fill-opacity="0.14"/>
+    <use href="#i-grid" x="352" y="457" width="20" height="20" color="#d2a8ff"/>
+    <text class="t" x="392" y="458">Coverage matrix</text>
+    <text class="mono m" x="392" y="475">Invoke-CoverageMatrix</text>
+    <text class="d" x="392" y="492">proves what Trivy really sees</text>
+  </g>
+
+  <!-- Lab policy bar (feeds automation and scanner) -->
+  <g class="sans">
+    <rect class="card" x="330" y="525" width="570" height="58" rx="10" stroke="#e3b341" stroke-opacity="0.45"/>
+    <rect x="344" y="536" width="36" height="36" rx="8" fill="#e3b341" fill-opacity="0.14"/>
+    <use href="#i-sliders" x="352" y="544" width="20" height="20" color="#e3b341"/>
+    <text class="t" x="392" y="551">Lab policy</text>
+    <text class="mono m" x="392" y="568">config/</text>
+    <rect class="inner" x="490" y="534" width="110" height="40" rx="8"/>
+    <text class="mono m" x="500" y="550">trivy.yaml</text>
+    <text class="ds" x="500" y="566">scan settings</text>
+    <rect class="inner" x="606" y="534" width="134" height="40" rx="8"/>
+    <text class="mono m" x="616" y="550">trivyignore.yaml</text>
+    <text class="ds" x="616" y="566">accepted risks</text>
+    <rect class="inner" x="746" y="534" width="142" height="40" rx="8"/>
+    <text class="mono m" x="756" y="550">compose.rego</text>
+    <text class="ds" x="756" y="566">custom Compose check</text>
+  </g>
+
+  <!-- ============ Column 3: Trivy ============ -->
+  <g class="sans">
+    <rect x="660" y="125" width="240" height="380" rx="12" fill="#121c22" stroke="#39c5cf" stroke-opacity="0.55"/>
+    <use href="#i-shield-check" x="674" y="136" width="36" height="36" color="#39c5cf"/>
+    <text class="tb" x="720" y="153" font-size="16">Trivy 0.76.1</text>
+    <text class="ds" x="720" y="170">exact version, no auto-update</text>
+
+    <text class="lbl" x="676" y="203">RUN MODES</text>
+    <rect class="inner" x="672" y="212" width="216" height="46" rx="8"/>
+    <use href="#i-lock" x="684" y="225" width="20" height="20" color="#39c5cf"/>
+    <text class="ts" x="714" y="232">Native binary</text>
+    <text class="ds" x="714" y="247">SHA-256 checksum verified</text>
+
+    <rect class="inner" x="672" y="266" width="216" height="46" rx="8"/>
+    <use href="#i-box" x="684" y="279" width="20" height="20" color="#39c5cf"/>
+    <text class="ts" x="714" y="286">Container</text>
+    <text class="ds" x="714" y="301">image pinned by digest</text>
+
+    <rect class="inner" x="672" y="320" width="216" height="46" rx="8"/>
+    <use href="#i-server" x="684" y="333" width="20" height="20" color="#39c5cf"/>
+    <text class="ts" x="714" y="340">Client / server</text>
+    <text class="ds" x="714" y="355">one shared vulnerability DB</text>
+
+    <text class="lbl" x="676" y="391">SCANNERS</text>
+    <rect x="672" y="399" width="104" height="26" rx="13" fill="#ff7b72" fill-opacity="0.12" stroke="#ff7b72" stroke-opacity="0.5"/>
+    <text x="724" y="416" text-anchor="middle" font-size="11" fill="#ffa198">Vulnerabilities</text>
+    <rect x="784" y="399" width="104" height="26" rx="13" fill="#e3b341" fill-opacity="0.12" stroke="#e3b341" stroke-opacity="0.5"/>
+    <text x="836" y="416" text-anchor="middle" font-size="11" fill="#e3b341">Secrets</text>
+    <rect x="672" y="431" width="104" height="26" rx="13" fill="#58a6ff" fill-opacity="0.12" stroke="#58a6ff" stroke-opacity="0.5"/>
+    <text x="724" y="448" text-anchor="middle" font-size="11" fill="#79c0ff">Misconfig (IaC)</text>
+    <rect x="784" y="431" width="104" height="26" rx="13" fill="#7ee787" fill-opacity="0.12" stroke="#7ee787" stroke-opacity="0.5"/>
+    <text x="836" y="448" text-anchor="middle" font-size="11" fill="#7ee787">Licences</text>
+    <text class="ds" x="780" y="483" text-anchor="middle">+ custom Rego checks</text>
+  </g>
+
+  <!-- ============ Column 4: evidence ============ -->
+  <g class="sans">
+    <rect x="960" y="125" width="210" height="380" rx="12" fill="#121d17" stroke="#7ee787" stroke-opacity="0.5"/>
+    <use href="#i-file" x="974" y="136" width="34" height="34" color="#7ee787"/>
+    <text class="mono" x="1018" y="153" font-size="15" font-weight="700" fill="#e6edf3">reports/</text>
+    <text class="ds" x="1018" y="170">one scan per target</text>
+
+    <text class="lbl" x="976" y="203">PRIMARY</text>
+    <rect class="inner" x="972" y="212" width="186" height="46" rx="8"/>
+    <text class="ts" x="986" y="232">JSON report</text>
+    <text class="ds" x="986" y="248">the single source of truth</text>
+    <rect class="inner" x="972" y="266" width="186" height="46" rx="8"/>
+    <text class="mono" x="986" y="286" font-size="12" font-weight="700" fill="#e6edf3">.meta.json</text>
+    <text class="ds" x="986" y="302">Trivy version · DB date · args</text>
+
+    <path class="flow" d="M992,316 L992,354" stroke="#7ee787" marker-end="url(#a-green)"/>
+    <text class="mono m" x="1006" y="331" font-size="10.5">Convert-Report</text>
+    <text class="ds" x="1006" y="346">derived, no second scan</text>
+
+    <rect class="inner" x="972" y="360" width="186" height="32" rx="8"/>
+    <text class="mono" x="986" y="380" font-size="11.5" font-weight="700" fill="#7ee787">SARIF</text>
+    <text class="ds" x="1040" y="380">code-scanning tools</text>
+    <rect class="inner" x="972" y="398" width="186" height="32" rx="8"/>
+    <text class="mono" x="986" y="418" font-size="11.5" font-weight="700" fill="#7ee787">SBOM</text>
+    <text class="ds" x="1040" y="418">CycloneDX · SPDX</text>
+    <rect class="inner" x="972" y="436" width="186" height="32" rx="8"/>
+    <text class="mono" x="986" y="456" font-size="11.5" font-weight="700" fill="#7ee787">Table</text>
+    <text class="ds" x="1040" y="456">human-readable</text>
+    <text class="ds" x="1065" y="490" text-anchor="middle">ready for CI, audits and dashboards</text>
+  </g>
+
+  <!-- ============ Flows ============ -->
+  <g>
+    <!-- inputs -> automation -->
+    <path class="flow" d="M260,163 L327,161" stroke="#58a6ff" marker-end="url(#a-blue)"/>
+    <path class="flow" d="M260,256 C295,256 295,262 327,262" stroke="#58a6ff" marker-end="url(#a-blue)"/>
+    <path class="flow" d="M260,332 C295,332 295,312 327,312" stroke="#ff7b72" marker-end="url(#a-red)"/>
+    <path class="flow" d="M260,450 C295,450 295,467 327,467" stroke="#58a6ff" marker-end="url(#a-blue)"/>
+    <!-- lock-file generator writes lock files into the clones -->
+    <path class="flow" d="M330,392 C295,392 295,372 263,372" stroke="#e3b341" marker-end="url(#a-amber)"/>
+    <!-- bulk -> single scan -->
+    <path class="flow" d="M460,195 L460,212" stroke="#d2a8ff" marker-end="url(#a-purple)"/>
+    <!-- policy -> coverage matrix, policy -> scanner -->
+    <path class="flow" d="M460,525 L460,505" stroke="#e3b341" marker-end="url(#a-amber)"/>
+    <path class="flow" d="M780,525 L780,508" stroke="#e3b341" marker-end="url(#a-amber)"/>
+    <!-- automation -> run modes -->
+    <path class="flow" d="M590,275 C625,275 625,235 657,235" stroke="#d2a8ff" marker-end="url(#a-purple)"/>
+    <path class="flow" d="M590,275 C625,275 625,289 657,289" stroke="#d2a8ff" marker-end="url(#a-purple)"/>
+    <path class="flow" d="M590,275 C625,275 625,343 657,343" stroke="#d2a8ff" marker-end="url(#a-purple)"/>
+    <path class="flow" d="M590,467 C625,467 625,455 657,455" stroke="#d2a8ff" marker-end="url(#a-purple)"/>
+    <text class="sans ds" x="624" y="484" text-anchor="middle" font-size="9.5">native</text>
+    <!-- run modes -> reports -->
+    <path class="flow" d="M900,235 C930,235 930,262 957,262" stroke="#39c5cf" marker-end="url(#a-cyan)"/>
+    <path class="flow" d="M900,289 C930,289 930,262 957,262" stroke="#39c5cf" marker-end="url(#a-cyan)"/>
+    <path class="flow" d="M900,343 C930,343 930,262 957,262" stroke="#39c5cf" marker-end="url(#a-cyan)"/>
+  </g>
+
+  <!-- ============ Guarantees ============ -->
+  <g class="sans">
+    <text class="lbl" x="30" y="602">WHY THE RESULTS CAN BE TRUSTED</text>
+
+    <rect class="card" x="30" y="610" width="370" height="58" rx="12"/>
+    <rect x="44" y="621" width="36" height="36" rx="18" fill="#7ee787" fill-opacity="0.14"/>
+    <use href="#i-lock" x="52" y="629" width="20" height="20" color="#7ee787"/>
+    <text class="t" x="92" y="635">Supply-chain safe</text>
+    <text class="d" x="92" y="653">exact Trivy version + SHA-256; images by digest</text>
+
+    <rect class="card" x="415" y="610" width="370" height="58" rx="12"/>
+    <rect x="429" y="621" width="36" height="36" rx="18" fill="#58a6ff" fill-opacity="0.14"/>
+    <use href="#i-shield" x="437" y="629" width="20" height="20" color="#58a6ff"/>
+    <text class="t" x="477" y="635">Untrusted code never runs</text>
+    <text class="d" x="477" y="653">scripts stay outside the scanned repositories</text>
+
+    <rect class="card" x="800" y="610" width="370" height="58" rx="12"/>
+    <rect x="814" y="621" width="36" height="36" rx="18" fill="#e3b341" fill-opacity="0.14"/>
+    <use href="#i-alert" x="822" y="629" width="20" height="20" color="#e3b341"/>
+    <text class="t" x="862" y="635">“0 vulnerabilities” ≠ “clean”</text>
+    <text class="d" x="862" y="653">projects Trivy could not read are flagged</text>
+  </g>
+</svg>
