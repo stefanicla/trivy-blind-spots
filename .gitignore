@@ -13,6 +13,10 @@ reports/*
 # Trivy cache (vulnerability DB, scan cache)
 cache/
 
+# .NET build output (dotnet restore/build or IDE design-time builds of the C# fixtures)
+bin/
+obj/
+
 # Temporary files written by the scripts
 *.tmp.json
 
