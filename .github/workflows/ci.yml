@@ -26,8 +26,12 @@ jobs:
       - name: Lint PowerShell scripts
         shell: pwsh
         run: |
-          Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Scope CurrentUser -Force
+          # Runner images do not always register PSGallery; PSResourceGet ships with PowerShell 7.4+.
+          if (-not (Get-PSResourceRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+            Register-PSResourceRepository -PSGallery
+          }
+          Install-PSResource PSScriptAnalyzer -Version 1.25.0 -Repository PSGallery -TrustRepository -Scope CurrentUser
+          Import-Module PSScriptAnalyzer -RequiredVersion 1.25.0
           Invoke-ScriptAnalyzer -Path ./scripts -Recurse -Settings ./PSScriptAnalyzerSettings.psd1 -EnableExit
 
   secrets:
