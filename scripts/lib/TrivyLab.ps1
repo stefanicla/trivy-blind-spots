@@ -141,7 +141,7 @@ function ConvertTo-HtmlPage([string]$Title, [string]$Body) {
     --ok-bg:#12261e; --ok-fg:#3fb950; --part-bg:#272115; --part-fg:#d29922; --miss-bg:#2d1214; --miss-fg:#f85149; --na-fg:#656c76; --diff:#ab7df8; }
 }
 * { box-sizing: border-box; }
-body { margin: 0 auto; max-width: 1500px; padding: 16px; background: var(--bg); color: var(--fg);
+body { margin: 0 auto; max-width: 1800px; padding: 16px; background: var(--bg); color: var(--fg);
   font: 14px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
 h1 { font-size: 22px; margin: 4px 0 12px; } h2 { font-size: 18px; margin: 24px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
 a { color: var(--link); }

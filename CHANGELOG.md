@@ -9,6 +9,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- README examples of the Trivy command table, the HTML scan report and the HTML coverage
+  matrix. `Update-ReadmeImages.ps1` renders them from real runs; the pages are captured
+  with a headless Edge or Chrome.
+
 - Human-readable HTML report for every scan (`ConvertTo-HtmlReport.ps1`, run by
   `Invoke-TrivyScan.ps1`): metadata and command, counts by severity, a "not assessed"
   warning, and findings grouped by file. Secret values are never copied into the page.
@@ -21,6 +25,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Every Trivy invocation is printed as a flag / value table with repository-relative
   paths, including the coverage-matrix passes and `trivy convert`.
+- HTML pages are up to 1800 px wide (was 1500 px), so the coverage matrix fits without
+  horizontal scrolling on wide screens.
 
 ### Fixed
 
