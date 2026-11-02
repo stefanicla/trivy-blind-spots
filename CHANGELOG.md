@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Human-readable HTML report for every scan (`ConvertTo-HtmlReport.ps1`, run by
+  `Invoke-TrivyScan.ps1`): metadata and command, counts by severity, a "not assessed"
+  warning, and findings grouped by file. Secret values are never copied into the page.
+- `matrix.html` for the coverage matrix: variants side by side, grouped by ecosystem,
+  colour-coded cells.
+- `bulk-<UTC>.html` batch summary from `Invoke-TrivyBulk.ps1`, linking each scan's report.
+- `Compress-Reports.ps1` archives the contents of `reports/` into a zip.
+
+### Changed
+
+- Every Trivy invocation is printed as a flag / value table with repository-relative
+  paths, including the coverage-matrix passes and `trivy convert`.
+
+### Fixed
+
+- `Invoke-TrivyScan.ps1` no longer fails when the Docker Compose pass finds no files to
+  check (for example, a project with only `package.json`).
+
 ## [0.1.0] - 2026-10-26
 
 First public release of the Trivy repository-scanning lab.
