@@ -118,6 +118,7 @@ sequenceDiagram
 | Git | 2.4x+ | Local targets, manual clones, fixtures |
 | Docker Desktop | 29.x | `docker-*` methods, lock-file generation, fixture regeneration, README images |
 | GitHub CLI (`gh`) | any | Optional: `Invoke-TrivyBulk.ps1 -GitHubOrg` |
+| Microsoft Edge or Google Chrome | any | Optional: screenshots of the HTML pages in the README images |
 
 Trivy itself is downloaded by the lab; do not install it separately.
 
@@ -170,6 +171,8 @@ and Terraform.
 Before each Trivy call the scripts print the command as a flag / value table, with paths
 shown relative to the repository root. The `.meta.json` sidecar keeps the exact arguments.
 
+![The scan script prints the Trivy command as a table, then the paths of the JSON and HTML reports](docs/images/trivy-command.svg)
+
 For private repositories, set `GITHUB_TOKEN` or `GITLAB_TOKEN` in the environment.
 Tokens are never put on the command line or into reports.
 
@@ -183,6 +186,10 @@ Every scan also writes `reports/<name>_<method>_<UTC>.html`, a self-contained pa
 people to read: the scan metadata and command, counts by severity, a "not assessed"
 warning when no dependency files were analysed, and every finding grouped by file.
 Secrets are listed by file, line and rule; the matched text is not copied into the page.
+
+The top of the HTML report for the known-answer fixture:
+
+![HTML scan report: scan details, counts by severity, and the first vulnerabilities grouped by file](docs/images/scan-report.png)
 
 ```powershell
 .\scripts\ConvertTo-HtmlReport.ps1 -Path .\reports\<report>.json   # HTML for an older report
@@ -212,6 +219,10 @@ case's `expected.txt`. Each case runs with the default settings and again with
 
 The results are saved in `reports/matrix-<UTC>/` as `summary.md` and `matrix.html`. The
 HTML page puts the two variants side by side, grouped by ecosystem, with colour-coded cells.
+Green means every expected finding was found, red means none was, and `≠` marks the cases
+where the two variants differ:
+
+![HTML coverage matrix: C# and Python cases, default and maximum variants side by side](docs/images/coverage-matrix.png)
 
 ### 6. Scan many repositories
 
@@ -288,7 +299,7 @@ Add time-boxed entries to `config/trivyignore.yaml`. Each entry needs a `stateme
 
 ```powershell
 .\scripts\New-EcosystemFixtures.ps1   # re-resolves lock files with today's versions (Docker)
-.\scripts\Update-ReadmeImages.ps1     # re-renders docs/images/*.svg from real runs (Docker)
+.\scripts\Update-ReadmeImages.ps1     # re-renders docs/images/*.svg and *.png from real runs (Docker, Edge or Chrome)
 ```
 
 ## Results at a glance

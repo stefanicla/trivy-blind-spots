@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="849" height="308" viewBox="0 0 849 308" role="img" aria-label="Every Trivy call is printed as a table">
+  <style>
+    text { font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; white-space: pre; }
+    .out { fill: #e6edf3; } .prompt { fill: #7ee787; } .warn { fill: #e3b341; } .dim { fill: #8b949e; } .title { fill: #8b949e; font-size: 12px; }
+  </style>
+  <rect width="849" height="308" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <rect width="849" height="30" rx="8" fill="#161b22"/>
+  <rect y="22" width="849" height="8" fill="#161b22"/>
+  <circle cx="18" cy="15" r="6" fill="#ff5f56"/><circle cx="38" cy="15" r="6" fill="#ffbd2e"/><circle cx="58" cy="15" r="6" fill="#27c93f"/>
+  <text class="title" x="424" y="19" text-anchor="middle">Every Trivy call is printed as a table</text>
+  <text class="prompt" x="16" y="57" xml:space="preserve">PS&gt; .\scripts\Invoke-TrivyScan.ps1 -Target .\fixtures\ecosystems\node-npm-lock -Method fs -Name npm-lock</text>
+  <text class="out" x="16" y="75" xml:space="preserve">┌─ Trivy: main pass ───────────────────────────────────────</text>
+  <text class="out" x="16" y="93" xml:space="preserve">│ executable    .\tools\trivy.exe</text>
+  <text class="out" x="16" y="111" xml:space="preserve">│ subcommand    fs</text>
+  <text class="out" x="16" y="129" xml:space="preserve">│ target        .\fixtures\ecosystems\node-npm-lock</text>
+  <text class="out" x="16" y="147" xml:space="preserve">│ --format      json</text>
+  <text class="out" x="16" y="165" xml:space="preserve">│ --quiet</text>
+  <text class="out" x="16" y="183" xml:space="preserve">│ --config      .\config\trivy.yaml</text>
+  <text class="out" x="16" y="201" xml:space="preserve">│ --ignorefile  .\config\trivyignore.yaml</text>
+  <text class="out" x="16" y="219" xml:space="preserve">│ --cache-dir   .\cache</text>
+  <text class="out" x="16" y="237" xml:space="preserve">│ --output      .\reports\npm-lock_fs_20261102T114600Z.json</text>
+  <text class="out" x="16" y="255" xml:space="preserve">└──────────────────────────────────────────────────────────</text>
+  <text class="out" x="16" y="273" xml:space="preserve">Done in 0.3s, exit code 0. Report: .\reports\npm-lock_fs_20261102T114600Z.json</text>
+  <text class="out" x="16" y="291" xml:space="preserve">Readable report: .\reports\npm-lock_fs_20261102T114600Z.html</text>
+</svg>
