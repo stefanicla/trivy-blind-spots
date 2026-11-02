@@ -26,12 +26,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot 'lib\TrivyLab.ps1')
 
 $severities = 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'
-
-function Get-Prop($Object, [string]$Name) {
-    if ($null -ne $Object -and $Object.PSObject.Properties[$Name]) { $Object.$Name } else { $null }
-}
 
 $files = foreach ($p in $Path) {
     if (Test-Path $p -PathType Container) {

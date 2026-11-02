@@ -167,6 +167,9 @@ Always use `-Scanners vuln,secret,misconfig` for a full assessment. Misconfigura
 scanning is off by default, and it is what covers Dockerfile, Compose, Kubernetes, Helm
 and Terraform.
 
+Before each Trivy call the scripts print the command as a flag / value table, with paths
+shown relative to the repository root. The `.meta.json` sidecar keeps the exact arguments.
+
 For private repositories, set `GITHUB_TOKEN` or `GITLAB_TOKEN` in the environment.
 Tokens are never put on the command line or into reports.
 
@@ -176,7 +179,13 @@ If Trivy found no dependency file to analyse, you get a warning:
 
 ### 4. Read the results
 
+Every scan also writes `reports/<name>_<method>_<UTC>.html`, a self-contained page for
+people to read: the scan metadata and command, counts by severity, a "not assessed"
+warning when no dependency files were analysed, and every finding grouped by file.
+Secrets are listed by file, line and rule; the matched text is not copied into the page.
+
 ```powershell
+.\scripts\ConvertTo-HtmlReport.ps1 -Path .\reports\<report>.json   # HTML for an older report
 .\scripts\Convert-Report.ps1 -Path .\reports -Top 5      # objects; add -Markdown for a table
 .\scripts\Invoke-TrivyScan.ps1 -Target ... -Format table,sarif,cyclonedx,spdx-json
 ```
@@ -201,6 +210,9 @@ case's `expected.txt`. Each case runs with the default settings and again with
 
 ![Coverage matrix](docs/images/coverage-matrix.svg)
 
+The results are saved in `reports/matrix-<UTC>/` as `summary.md` and `matrix.html`. The
+HTML page puts the two variants side by side, grouped by ecosystem, with colour-coded cells.
+
 ### 6. Scan many repositories
 
 ```powershell
@@ -209,9 +221,16 @@ case's `expected.txt`. Each case runs with the default settings and again with
 ```
 
 Each line of `targets/targets.txt` is `<URL or path> [method] [extra Trivy arguments]`.
-Failures are logged, and the batch continues.
+Failures are logged, and the batch continues. The batch summary is also saved as
+`reports/bulk-<UTC>.html`, with a link to each scan's HTML report.
 
 ![Bulk summary](docs/images/bulk-summary.svg)
+
+To start a clean round of scans, archive the current contents of `reports/`:
+
+```powershell
+.\scripts\Compress-Reports.ps1        # reports/archive/reports-<UTC>.zip; -WhatIf to preview
+```
 
 ### 7. Repositories without lock files
 
@@ -293,12 +312,14 @@ config/         trivy.yaml, trivyignore.yaml, checks/compose.rego
 docs/           methods.md, test-plan.md, results.md, images/
 fixtures/       ecosystems/<case>/ - known-answer cases with expected.txt
 scripts/        Install-Trivy, Invoke-TrivyScan, Invoke-TrivyBulk, Convert-Report,
-                Invoke-CoverageMatrix, New-LockFile, New-Fixture, New-EcosystemFixtures,
-                Test-KnownAnswer, Update-ReadmeImages, New-TerminalSvg
+                ConvertTo-HtmlReport, Compress-Reports, Invoke-CoverageMatrix,
+                New-LockFile, New-Fixture, New-EcosystemFixtures, Test-KnownAnswer,
+                Update-ReadmeImages, New-TerminalSvg; lib/TrivyLab.ps1 (shared helpers)
 targets/        targets.txt - repositories for bulk scans
 tools/          pinned trivy.exe                                   (git-ignored)
 workspace/      clones and generated targets - untrusted           (git-ignored)
-reports/        <name>_<method>_<UTC>.json + .meta.json + formats  (git-ignored)
+reports/        <name>_<method>_<UTC>.json + .meta.json + .html + formats,
+                matrix-<UTC>/, bulk-<UTC>.html, archive/*.zip      (git-ignored)
 cache/          Trivy DB and scan cache                            (git-ignored)
 ```
 

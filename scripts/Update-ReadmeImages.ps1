@@ -37,12 +37,14 @@ New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 Push-Location $repoRoot
 
 # Runs a script block and returns its console output (all streams) as text, without the
-# long "> trivy ..." command echo lines printed by Invoke-TrivyScan.ps1.
+# Trivy command boxes printed by Write-TrivyCommand (lines starting with a box-drawing corner,
+# side or tee) and the "Readable report:" line, so the screenshots keep their compact layout.
 function Get-ConsoleText([scriptblock]$Block) {
     $out = & $Block *>&1 | ForEach-Object {
         if ($_ -is [Management.Automation.WarningRecord]) { "WARNING: $($_.Message)" } else { "$_" }
     }
-    (@($out) -join "`n") -split "`n" | Where-Object { $_ -notmatch '^> ' } | Out-String -Width 200
+    (@($out) -join "`n") -split "`n" | Where-Object { $_ -notmatch '^[\u250C\u2502\u251C\u2514]|^Readable report: ' } |
+        Out-String -Width 200
 }
 
 function Get-ShortName([string]$Report) { $Report -replace '_(repo|fs|sbom|docker-\w+)_\d{8}T\d{6}Z\.json$', '' }

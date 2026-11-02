@@ -10,9 +10,12 @@
       docker-repo  trivy repo inside the pinned container image
       docker-fs    trivy fs inside the pinned container image (path mounted read-only)
 
+    Each Trivy invocation is printed as a flag / value table before it runs.
+
     Outputs, in reports/:
       <name>_<method>_<UTC stamp>.json        Trivy JSON report (always produced)
       <name>_<method>_<UTC stamp>.meta.json   Trivy version, DB date, duration, exit code, arguments
+      <name>_<method>_<UTC stamp>.html        Human-readable page (ConvertTo-HtmlReport.ps1)
       <name>_<method>_<UTC stamp>.<ext>       Extra formats requested with -Format, produced with
                                               `trivy convert` from the JSON (no second scan)
 
@@ -67,6 +70,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot 'lib\TrivyLab.ps1')
 
 # Pinned by digest (identical on Docker Hub and GHCR). See README before changing.
 $DockerImage = 'aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c'
@@ -165,7 +169,7 @@ function Get-TrivyInvocation([string[]]$PassArgs, [string]$ReportFile, [switch]$
 }
 
 $cmd, $trivyArgs = Get-TrivyInvocation $scanArgs $jsonReport
-Write-Host "> $cmd $($trivyArgs -join ' ')"
+Write-TrivyCommand 'Trivy: main pass' $cmd $trivyArgs $repoRoot
 $sw = [Diagnostics.Stopwatch]::StartNew()
 & $cmd @trivyArgs
 $exitCode = $LASTEXITCODE
@@ -184,12 +188,13 @@ if ($composePass) {
     }
     if ($ExtraArgs) { $composeArgs += $ExtraArgs }
     $composeCmd, $composeTrivyArgs = Get-TrivyInvocation $composeArgs $composeReport -CustomChecks
-    Write-Host "> (compose pass) $composeCmd $($composeTrivyArgs -join ' ')"
+    Write-TrivyCommand 'Trivy: Docker Compose pass' $composeCmd $composeTrivyArgs $repoRoot
     & $composeCmd @composeTrivyArgs
     if ($LASTEXITCODE -eq 0 -and (Test-Path $composeReport)) {
         $main  = Get-Content -Raw $jsonReport | ConvertFrom-Json
         $extra = Get-Content -Raw $composeReport | ConvertFrom-Json
-        $composeResults = @($extra.PSObject.Properties['Results'] | ForEach-Object Value | Where-Object {
+        # No Results property when the target has no files for the yaml scanner.
+        $composeResults = @(Get-Prop $extra 'Results' | Where-Object {
             $_ -and $_.PSObject.Properties['Misconfigurations'] -and @($_.Misconfigurations | Where-Object Status -eq 'FAIL')
         })
         if ($composeResults) {
@@ -257,9 +262,21 @@ foreach ($f in $Format) {
         'github'    { 'github.json' }
     }
     $out = Join-Path $reportsDir "$baseName.$ext"
-    & $trivyExe convert --format $f --output $out $jsonReport
+    $convertArgs = @('convert', '--format', $f, '--output', $out, $jsonReport)
+    Write-TrivyCommand "Trivy: convert to $f" $trivyExe $convertArgs $repoRoot
+    & $trivyExe @convertArgs
     if ($LASTEXITCODE -ne 0) { Write-Warning "Conversion to $f failed (exit code $LASTEXITCODE)." }
 }
 
+# Human-readable page next to the JSON. A rendering problem must not fail the scan.
+$htmlReport = $null
+try {
+    $htmlReport = (& (Join-Path $PSScriptRoot 'ConvertTo-HtmlReport.ps1') -Path $jsonReport).FullName
+}
+catch {
+    Write-Warning "HTML report not written: $_"
+}
+
 Write-Host ("Done in {0}s, exit code {1}. Report: {2}" -f $meta.durationSeconds, $exitCode, $jsonReport)
+if ($htmlReport) { Write-Host "Readable report: $htmlReport" }
 exit $exitCode
