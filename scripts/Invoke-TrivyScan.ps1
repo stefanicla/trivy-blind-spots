@@ -17,7 +17,8 @@
       <name>_<method>_<UTC stamp>.meta.json   Trivy version, DB date, duration, exit code, arguments
       <name>_<method>_<UTC stamp>.html        Human-readable page (ConvertTo-HtmlReport.ps1)
       <name>_<method>_<UTC stamp>.<ext>       Extra formats requested with -Format, produced with
-                                              `trivy convert` from the JSON (no second scan)
+                                              `trivy convert` from the JSON (no second scan).
+                                              Formats and extensions: docs/report-formats.md
 
     Private repositories: set GITHUB_TOKEN or GITLAB_TOKEN in the environment beforehand.
     Tokens are never passed on the command line or written to the reports.
@@ -41,8 +42,10 @@ param(
     [ValidateSet('UNKNOWN', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL')]
     [string[]]$Severity,
 
-    # Additional output formats converted from the JSON report.
-    [ValidateSet('table', 'sarif', 'cyclonedx', 'spdx-json', 'github')]
+    # Additional output formats converted from the JSON report; 'all' means every one.
+    # Must match Get-TrivyFormatCatalog in lib/TrivyLab.ps1 (see docs/report-formats.md).
+    [ValidateSet('all', 'table', 'table-summary', 'sarif', 'cyclonedx', 'spdx', 'spdx-json', 'github', 'cosign-vuln',
+        'html', 'junit', 'gitlab', 'gitlab-codequality', 'asff')]
     [string[]]$Format,
 
     # Remote repository reference (repo / docker-repo only; mutually exclusive).
@@ -253,19 +256,13 @@ if ($subcmd -ne 'sbom' -and (-not $Scanners -or $Scanners -contains 'vuln')) {
 }
 
 # Extra formats are derived from the JSON report, so the target is scanned only once.
-foreach ($f in $Format) {
-    $ext = switch ($f) {
-        'table'     { 'txt' }
-        'sarif'     { 'sarif' }
-        'cyclonedx' { 'cdx.json' }
-        'spdx-json' { 'spdx.json' }
-        'github'    { 'github.json' }
-    }
-    $out = Join-Path $reportsDir "$baseName.$ext"
-    $convertArgs = @('convert', '--format', $f, '--output', $out, $jsonReport)
-    Write-TrivyCommand "Trivy: convert to $f" $trivyExe $convertArgs $repoRoot
+$formats = @(Get-TrivyFormatCatalog $repoRoot | Where-Object { $_.Name -ne 'json' -and ($Format -contains 'all' -or $Format -contains $_.Name) })
+foreach ($f in $formats) {
+    $out = Join-Path $reportsDir "$baseName.$($f.Extension)"
+    $convertArgs = @('convert') + $f.Arguments + @('--output', $out, $jsonReport)
+    Write-TrivyCommand "Trivy: convert to $($f.Name)" $trivyExe $convertArgs $repoRoot
     & $trivyExe @convertArgs
-    if ($LASTEXITCODE -ne 0) { Write-Warning "Conversion to $f failed (exit code $LASTEXITCODE)." }
+    if ($LASTEXITCODE -ne 0) { Write-Warning "Conversion to $($f.Name) failed (exit code $LASTEXITCODE)." }
 }
 
 # Human-readable page next to the JSON. A rendering problem must not fail the scan.

@@ -30,10 +30,14 @@ Set-StrictMode -Version Latest
 
 $severities = 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'
 
+# Converted formats (<report>.cdx.json, .asff.json, ...) and .meta.json sidecars are not scan reports.
+$otherSuffixes = @('.meta.json') + @(Get-TrivyFormatCatalog '' | Where-Object Name -ne 'json' | ForEach-Object { ".$($_.Extension)" })
 $files = foreach ($p in $Path) {
     if (Test-Path $p -PathType Container) {
-        Get-ChildItem $p -Filter *.json -File |
-            Where-Object { $_.Name -notmatch '\.(meta|cdx|spdx|github)\.json$' }
+        Get-ChildItem $p -Filter *.json -File | Where-Object {
+            $name = $_.Name
+            -not ($otherSuffixes | Where-Object { $name.EndsWith($_, [StringComparison]::OrdinalIgnoreCase) })
+        }
     }
     else { Get-Item $p }
 }

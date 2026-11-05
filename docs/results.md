@@ -9,6 +9,7 @@ Raw reports are in `reports/` (git-ignored). Re-create them with:
 ```powershell
 .\scripts\Invoke-CoverageMatrix.ps1                          # ecosystem coverage (E16)
 .\scripts\Invoke-TrivyBulk.ps1 -Scanners vuln,secret,misconfig   # real repositories (E17)
+.\scripts\Invoke-FormatShowcase.ps1                          # report formats (E19)
 ```
 
 ## Executive summary
@@ -43,6 +44,10 @@ Raw reports are in `reports/` (git-ignored). Re-create them with:
      silently drops all Kubernetes findings; fixed with a separate Compose pass.
 6. **Secrets in Git history are not detected**, and neither are plain-text passwords
    without a recognisable token format. Use gitleaks for history.
+7. **Not every report format carries every finding (E19).** The official HTML and GitLab
+   templates, the SBOM formats and the GitHub snapshot leave out secrets and/or
+   misconfigurations without warning. The HTML template is the only native format that
+   becomes real Word tables, and it has no secrets.
 
 ## Ecosystem coverage matrix (E16)
 
@@ -154,6 +159,28 @@ credentials.
 | Scan cache key ignores `--offline-scan` | Results depend on previous runs | `trivy clean --scan-cache` before comparisons |
 | `trivy sbom` rejects the `secret` scanner | Shared config breaks SBOM scans | Script defaults to `vuln` for `sbom` |
 | Telemetry on by default | Usage data sent to Aqua | Disabled in `config/trivy.yaml` |
+| `--template path.tpl` without `@` | The path itself is used as the template text: a 22-byte report, exit code 0 | The format catalogue always passes `@<path>` |
+| Report formats drop finding classes | `html` and `gitlab` templates, SBOMs and `github` omit secrets and/or misconfigurations, with exit code 0 | Keep the JSON as the reference; choose formats per reader ([report-formats.md](report-formats.md)) |
+
+## Report formats (E19)
+
+Run on 5 November 2026 with Trivy 0.76.1 (DB of 2026-11-05) on the known-answer fixture,
+using `Invoke-FormatShowcase.ps1`. All 14 conversions succeeded from one JSON report with
+62 vulnerabilities, 1 secret, 12 misconfigurations and 5 packages. Full table, Word
+procedure and manual tests: [report-formats.md](report-formats.md).
+
+| Carries | Formats |
+|---|---|
+| Everything | `json`, `table`, `sarif`, `cosign-vuln`, `junit`, `gitlab-codequality`, `asff` |
+| Vulnerabilities and misconfigurations, **no secrets** | `html` (official template) |
+| Vulnerabilities only | `gitlab` (official template), `cyclonedx` (plus the inventory) |
+| Inventory only | `spdx`, `spdx-json` (CVEs only as advisory links), `github` |
+| Counts only | `table --table-mode summary` |
+
+**Word:** only the `html` template becomes real Word tables. It fits A4 width, but runs
+to 17 pages for this small fixture, because Word shows all 1811 reference links that the
+browser hides with JavaScript. It also has no secrets and no file names (sections are
+headed by file type only).
 
 ## Method experiments (E00–E15)
 
@@ -166,7 +193,7 @@ credentials.
 | E05 | Pass | `--branch`, `--tag`, `--commit` work. NodeGoat `v1.3` = 0 (no lock file) vs HEAD = 92 |
 | E06 | Pass | Each scanner adds only its own finding class |
 | E07 | Pass | Severity, `--ignore-unfixed`, `--skip-dirs` and suppressions behave as documented. **Expired suppressions are not applied**; `--show-suppressed` records the statement and source file |
-| E08 | Pass | table, SARIF 2.1.0, CycloneDX 1.7, SPDX, GitHub formats valid; `--exit-code 1` gates |
+| E08 | Pass | table, SARIF 2.1.0, CycloneDX 1.7, SPDX, GitHub formats valid; `--exit-code 1` gates. What each format contains: E19 |
 | E09 | Pass | SBOM round-trip = direct scan (0 differences on 3 targets) |
 | E10 | Pass | Docker = native. The first run is slow (image, DB and checks download) |
 | E11 | Pass | Server mode: clients keep no DB; a wrong token is rejected |

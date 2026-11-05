@@ -55,6 +55,7 @@ Compose, Kubernetes/Helm. Out of scope: Java (and with it Maven resolution), PHP
 | E16 | M3 | Ecosystem coverage matrix (`Invoke-CoverageMatrix.ps1`): C# (csproj, packages.lock.json, CPM, packages.config), Python (requirements variants, pyproject, uv, Poetry, Pipenv), Node (npm, yarn v1/Berry, pnpm, bun), IaC (Dockerfile names, Compose, Kubernetes, Helm, Terraform); default vs `--include-dev-deps --detection-priority comprehensive` | Every supported format detects direct and transitive findings; unsupported formats are identified |
 | E17 | M8 | Bulk scan of real C#, Python, Node/TS and IaC repositories | One report per target; silent-zero cases identified |
 | E18 | — | `New-LockFile.ps1` on lock-less fixtures | Findings appear after lock generation |
+| E19 | M1 | Report formats (`Invoke-FormatShowcase.ps1`): one fixture scan converted to every native format (table, SARIF, CycloneDX, SPDX, GitHub, cosign-vuln, and the official html/junit/gitlab/gitlab-codequality/asff templates); which finding classes each one carries; which one can go into Word | Every conversion succeeds; formats that drop finding classes are identified; a Word-ready format is identified or ruled out |
 
 ## Metrics per run
 
@@ -69,6 +70,7 @@ the JSON report and `.meta.json` sidecar; summarise with `Convert-Report.ps1 -Ma
 .\scripts\Test-KnownAnswer.ps1                              # E01 / E15 as PASS/FAIL checks (also run in CI)
 .\scripts\Invoke-CoverageMatrix.ps1                         # E16 (fixtures are committed)
 .\scripts\Invoke-TrivyBulk.ps1 -Scanners vuln,secret,misconfig   # E17
+.\scripts\Invoke-FormatShowcase.ps1 -Rescan                 # E19 (manual checks: docs/report-formats.md)
 ```
 
 `New-EcosystemFixtures.ps1` re-creates `fixtures/ecosystems` with fresh dependency

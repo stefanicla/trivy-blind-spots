@@ -22,6 +22,7 @@ function Get-Prop($Object, [string]$Name) {
 # Shortens paths under the repository root to .\relative\path, also inside values such as
 # "C:\repo\cache:/root/.cache/trivy". Other text is returned unchanged.
 function Get-RepoRelativePath([string]$Text, [string]$RepoRoot) {
+    if ($Text.StartsWith('@')) { return '@' + (Get-RepoRelativePath $Text.Substring(1) $RepoRoot) }   # --template @file
     if (-not $RepoRoot -or -not $Text.StartsWith($RepoRoot, [StringComparison]::OrdinalIgnoreCase)) { return $Text }
     $rest = $Text.Substring($RepoRoot.Length)
     if ($rest -and $rest[0] -notin '\', '/', ':') { return $Text }   # a sibling such as C:\repo-other
@@ -105,6 +106,66 @@ function Write-TrivyCommand([string]$Title, [string]$Command, [string[]]$Argumen
     Write-Host ($script:BoxBottom + $script:BoxLine * ($ruler - 1)) -ForegroundColor DarkGray
 }
 
+<#
+    Every report format Trivy can produce natively from a JSON report with `trivy convert`.
+    Single source for Invoke-TrivyScan.ps1 -Format, Invoke-FormatShowcase.ps1 and
+    docs/report-formats.md. The template entries use the official templates that
+    Install-Trivy.ps1 copies to tools/contrib/. Template paths need the leading "@":
+    without it Trivy treats the value as the template text itself.
+
+    Word: yes  = renders as real tables when opened in, or pasted into, Microsoft Word
+          poor = plain text that only lines up in a monospace font
+          no   = machine-readable data (JSON, XML, SBOM)
+    The -Format ValidateSet lists in the scripts must match the Name values below.
+#>
+function Get-TrivyFormatCatalog([string]$RepoRoot) {
+    $tpl = { param($File) @('--format', 'template', '--template', ('@' + [IO.Path]::Combine($RepoRoot, 'tools', 'contrib', $File))) }
+    @(
+        [pscustomobject]@{ Name = 'json'; Extension = 'json'; Word = 'no'; Audience = 'Automation, archiving'
+            Description = 'Complete Trivy report: every finding class, all packages. The source for every other format.'
+            Arguments = @('--format', 'json') }
+        [pscustomobject]@{ Name = 'table'; Extension = 'table.txt'; Word = 'poor'; Audience = 'People at a console'
+            Description = 'Summary table per target, then one detailed table per finding class.'
+            Arguments = @('--format', 'table', '--scanners', 'vuln,secret,misconfig,license') }
+        [pscustomobject]@{ Name = 'table-summary'; Extension = 'summary.txt'; Word = 'poor'; Audience = 'People at a console'
+            Description = 'Only the summary table: finding counts per target and class, no finding details.'
+            Arguments = @('--format', 'table', '--table-mode', 'summary', '--scanners', 'vuln,secret,misconfig,license') }
+        [pscustomobject]@{ Name = 'sarif'; Extension = 'sarif'; Word = 'no'; Audience = 'GitHub code scanning, IDEs'
+            Description = 'SARIF 2.1.0: one rule and one result per finding, with file locations.'
+            Arguments = @('--format', 'sarif') }
+        [pscustomobject]@{ Name = 'cyclonedx'; Extension = 'cdx.json'; Word = 'no'; Audience = 'SBOM / VEX tooling'
+            Description = 'CycloneDX SBOM: component inventory plus a vulnerabilities section. No secrets or misconfigurations.'
+            Arguments = @('--format', 'cyclonedx') }
+        [pscustomobject]@{ Name = 'spdx'; Extension = 'spdx'; Word = 'no'; Audience = 'SBOM / licence tooling'
+            Description = 'SPDX 2.3 SBOM, tag-value text: package inventory. Vulnerabilities appear only as advisory links on each package (no severity, no fixed version).'
+            Arguments = @('--format', 'spdx') }
+        [pscustomobject]@{ Name = 'spdx-json'; Extension = 'spdx.json'; Word = 'no'; Audience = 'SBOM / licence tooling'
+            Description = 'SPDX 2.3 SBOM, JSON: as spdx, in JSON.'
+            Arguments = @('--format', 'spdx-json') }
+        [pscustomobject]@{ Name = 'github'; Extension = 'github.json'; Word = 'no'; Audience = 'GitHub dependency graph'
+            Description = 'GitHub dependency snapshot: manifests and the packages they resolve to. No findings at all.'
+            Arguments = @('--format', 'github') }
+        [pscustomobject]@{ Name = 'cosign-vuln'; Extension = 'cosign-vuln.json'; Word = 'no'; Audience = 'Signed attestations (cosign attest)'
+            Description = 'Cosign vulnerability attestation predicate; it wraps the complete Trivy JSON report.'
+            Arguments = @('--format', 'cosign-vuln') }
+        [pscustomobject]@{ Name = 'html'; Extension = 'trivy.html'; Word = 'yes'; Audience = 'People; Word documents'
+            Description = 'Official html.tpl: HTML tables of vulnerabilities and misconfigurations, one section per file headed by its type (not its name). No secrets.'
+            Arguments = (& $tpl 'html.tpl') }
+        [pscustomobject]@{ Name = 'junit'; Extension = 'junit.xml'; Word = 'no'; Audience = 'CI test reports (Jenkins, GitLab, Azure DevOps)'
+            Description = 'Official junit.tpl: each finding (vulnerability, misconfiguration, secret, licence) is a failed test case.'
+            Arguments = (& $tpl 'junit.tpl') }
+        [pscustomobject]@{ Name = 'gitlab'; Extension = 'gitlab.json'; Word = 'no'; Audience = 'GitLab dependency / container scanning'
+            Description = 'Official gitlab.tpl: GitLab security report schema. Vulnerabilities only.'
+            Arguments = (& $tpl 'gitlab.tpl') }
+        [pscustomobject]@{ Name = 'gitlab-codequality'; Extension = 'codequality.json'; Word = 'no'; Audience = 'GitLab Code Quality widget'
+            Description = 'Official gitlab-codequality.tpl: Code Climate issues for vulnerabilities, misconfigurations and secrets.'
+            Arguments = (& $tpl 'gitlab-codequality.tpl') }
+        [pscustomobject]@{ Name = 'asff'; Extension = 'asff.json'; Word = 'no'; Audience = 'AWS Security Hub'
+            Description = 'Official asff.tpl: AWS Security Finding Format for vulnerabilities, misconfigurations and secrets. Reads AWS_REGION and AWS_ACCOUNT_ID from the environment (empty when unset).'
+            Arguments = (& $tpl 'asff.tpl') }
+    )
+}
+
 function ConvertTo-HtmlText($Text) { [System.Net.WebUtility]::HtmlEncode([string]$Text) }
 
 $script:SeverityOrder = @{ CRITICAL = 0; HIGH = 1; MEDIUM = 2; LOW = 3; UNKNOWN = 4 }
@@ -172,6 +233,8 @@ summary .sev { min-width: 0; margin-left: 4px; }
 tr.group th { background: var(--bg); font-size: 15px; padding-top: 14px; border-left: 0; border-right: 0; }
 tr.diff td:first-child { box-shadow: inset 4px 0 0 var(--diff); }
 .diffmark { color: var(--diff); font-weight: 600; }
+pre { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; overflow-x: auto;
+  font-family: Consolas, "Cascadia Mono", Menlo, monospace; font-size: 12px; line-height: 1.4; }
 '@
     @"
 <!DOCTYPE html>

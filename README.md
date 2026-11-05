@@ -61,7 +61,7 @@ what it silently misses, and how to close the gaps.
 | **Scanners** | Vulnerabilities, secrets, misconfigurations (IaC), licences |
 | **In scope** | C#/.NET, Python, JavaScript/TypeScript (Node), Terraform, Dockerfile, Docker Compose, Kubernetes/Helm |
 | **Out of scope** | Java, PHP (tested early on, dropped) |
-| **Evidence** | Known-answer fixtures with expected findings, 12 real public repositories, 18 documented experiments |
+| **Evidence** | Known-answer fixtures with expected findings, 12 real public repositories, 19 documented experiments |
 
 ## Architecture
 
@@ -133,7 +133,8 @@ All commands run from the repository root in PowerShell 7.
 ```
 
 This downloads Trivy 0.76.1 into `tools\`, verifies its SHA-256 (it aborts on a
-mismatch) and prints `Version: 0.76.1`.
+mismatch) and prints `Version: 0.76.1`. The official report templates from the same
+archive go to `tools\contrib\`.
 
 ### 2. Run the known-answer test
 
@@ -194,7 +195,7 @@ The top of the HTML report for the known-answer fixture:
 ```powershell
 .\scripts\ConvertTo-HtmlReport.ps1 -Path .\reports\<report>.json   # HTML for an older report
 .\scripts\Convert-Report.ps1 -Path .\reports -Top 5      # objects; add -Markdown for a table
-.\scripts\Invoke-TrivyScan.ps1 -Target ... -Format table,sarif,cyclonedx,spdx-json
+.\scripts\Invoke-TrivyScan.ps1 -Target ... -Format table,sarif,cyclonedx,html   # or -Format all
 ```
 
 | Column | Meaning |
@@ -205,7 +206,25 @@ The top of the HTML report for the known-answer fixture:
 | `Suppressed` | Findings hidden by `config/trivyignore.yaml` (with `--show-suppressed`) |
 | `DbUpdatedAt` | Vulnerability-DB date, from the `.meta.json` sidecar |
 
-### 5. Measure ecosystem coverage
+### 5. Report formats: what Trivy can produce natively
+
+```powershell
+.\scripts\Invoke-FormatShowcase.ps1 -Open
+```
+
+This scans the fixture once, then converts the JSON report into every native format: table,
+SARIF, CycloneDX, SPDX, GitHub, cosign-vuln, and the official HTML, JUnit, GitLab, GitLab
+Code Quality and AWS Security Hub templates. It writes them all to
+`reports/formats-<UTC>/`, with an `index.html` overview showing which finding classes each
+format carries and a ready-to-paste command for each one.
+
+Not every format carries every finding. The SBOM and GitHub formats are package
+inventories, and the HTML and GitLab templates drop secrets without warning. The only
+native format that becomes real tables in Word is the HTML template. The measurements,
+the Word procedure and a manual test for each format are in
+[docs/report-formats.md](docs/report-formats.md).
+
+### 6. Measure ecosystem coverage
 
 ```powershell
 .\scripts\Invoke-CoverageMatrix.ps1
@@ -224,7 +243,7 @@ where the two variants differ:
 
 ![HTML coverage matrix: C# and Python cases, default and maximum variants side by side](docs/images/coverage-matrix.png)
 
-### 6. Scan many repositories
+### 7. Scan many repositories
 
 ```powershell
 .\scripts\Invoke-TrivyBulk.ps1 -Scanners vuln,secret,misconfig            # targets/targets.txt
@@ -243,7 +262,7 @@ To start a clean round of scans, archive the current contents of `reports/`:
 .\scripts\Compress-Reports.ps1        # reports/archive/reports-<UTC>.zip; -WhatIf to preview
 ```
 
-### 7. Repositories without lock files
+### 8. Repositories without lock files
 
 ```powershell
 .\scripts\New-LockFile.ps1 -Source .\workspace\some-repo          # -> .\workspace\some-repo-locked
@@ -261,7 +280,7 @@ The script generates `packages.lock.json` (C#), `uv.lock` or compiled requiremen
 
 ![Lock file before and after](docs/images/lockfile-before-after.svg)
 
-### 8. Docker Compose and other IaC
+### 9. Docker Compose and other IaC
 
 Misconfiguration checks for Dockerfile, Kubernetes, Helm and Terraform are built in.
 For Docker Compose, the scan script runs the custom check `config/checks/compose.rego`
@@ -269,7 +288,7 @@ automatically:
 
 ![Compose check](docs/images/compose-check.svg)
 
-### 9. Other ingestion methods
+### 10. Other ingestion methods
 
 ```powershell
 # Container (no host install), image pinned by digest
@@ -289,13 +308,13 @@ automatically:
 .\scripts\Invoke-TrivyScan.ps1 -Target C:\src\my-repo -Method fs -Offline
 ```
 
-### 10. Suppress accepted findings
+### 11. Suppress accepted findings
 
 Add time-boxed entries to `config/trivyignore.yaml`. Each entry needs a `statement`
 (the reason) and an `expired_at` date. Expired entries stop applying automatically, and
 `--show-suppressed` keeps an audit trail.
 
-### 11. Regenerate fixtures and images (optional)
+### 12. Regenerate fixtures and images (optional)
 
 ```powershell
 .\scripts\New-EcosystemFixtures.ps1   # re-resolves lock files with today's versions (Docker)
@@ -312,7 +331,7 @@ Add time-boxed entries to `config/trivyignore.yaml`. Each entry needs a `stateme
 | IaC | Dockerfile (any naming), Kubernetes, Helm, Terraform | — | Docker Compose (custom check provided) |
 
 All ingestion methods produced identical findings on the same commit. Full results, the
-real-repository table, 18 experiments and the recommendations are in
+real-repository table, 19 experiments and the recommendations are in
 [docs/results.md](docs/results.md).
 
 ## Repository layout
@@ -324,13 +343,15 @@ docs/           methods.md, test-plan.md, results.md, images/
 fixtures/       ecosystems/<case>/ - known-answer cases with expected.txt
 scripts/        Install-Trivy, Invoke-TrivyScan, Invoke-TrivyBulk, Convert-Report,
                 ConvertTo-HtmlReport, Compress-Reports, Invoke-CoverageMatrix,
-                New-LockFile, New-Fixture, New-EcosystemFixtures, Test-KnownAnswer,
-                Update-ReadmeImages, New-TerminalSvg; lib/TrivyLab.ps1 (shared helpers)
+                Invoke-FormatShowcase, New-LockFile, New-Fixture, New-EcosystemFixtures,
+                Test-KnownAnswer, Update-ReadmeImages, New-TerminalSvg;
+                lib/TrivyLab.ps1 (shared helpers, report-format catalogue)
 targets/        targets.txt - repositories for bulk scans
-tools/          pinned trivy.exe                                   (git-ignored)
+tools/          pinned trivy.exe, contrib/*.tpl report templates   (git-ignored)
 workspace/      clones and generated targets - untrusted           (git-ignored)
 reports/        <name>_<method>_<UTC>.json + .meta.json + .html + formats,
-                matrix-<UTC>/, bulk-<UTC>.html, archive/*.zip      (git-ignored)
+                matrix-<UTC>/, formats-<UTC>/, bulk-<UTC>.html,
+                archive/*.zip                                      (git-ignored)
 cache/          Trivy DB and scan cache                            (git-ignored)
 ```
 
@@ -366,7 +387,8 @@ cache/          Trivy DB and scan cache                            (git-ignored)
 | Document | Content |
 |---|---|
 | [docs/methods.md](docs/methods.md) | Every ingestion method, with trade-offs, and what Trivy reads per ecosystem |
-| [docs/test-plan.md](docs/test-plan.md) | Targets and the experiment matrix (E00–E18) |
+| [docs/report-formats.md](docs/report-formats.md) | Every native report format: what it contains, how to test it by hand, which one works in Word |
+| [docs/test-plan.md](docs/test-plan.md) | Targets and the experiment matrix (E00–E19) |
 | [docs/results.md](docs/results.md) | All results, pitfalls and recommendations |
 | [SECURITY.md](SECURITY.md) | Reporting vulnerabilities, scope, pinning policy |
 | [CHANGELOG.md](CHANGELOG.md) | Release history |

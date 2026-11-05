@@ -9,6 +9,17 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Report formats (E19): `Invoke-FormatShowcase.ps1` converts one fixture scan into every
+  native Trivy format. It writes `reports/formats-<UTC>/` with an `index.html` showing
+  which finding classes each format carries, plus a ready-to-paste command per format.
+  `docs/report-formats.md` documents the results, a manual test for each format, and how
+  to bring a report into Word.
+- `Install-Trivy.ps1` also installs the official report templates (`html`, `junit`,
+  `gitlab`, `gitlab-codequality`, `asff`) from the same checksum-verified archive into
+  `tools/contrib/`.
+- `Invoke-TrivyScan.ps1 -Format` accepts every native format (`spdx`, `cosign-vuln`,
+  `table-summary`, the five templates) and `all`.
+
 - README examples of the Trivy command table, the HTML scan report and the HTML coverage
   matrix. `Update-ReadmeImages.ps1` renders them from real runs; the pages are captured
   with a headless Edge or Chrome.
@@ -22,6 +33,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Compress-Reports.ps1` archives the contents of `reports/` into a zip.
 
 ### Changed
+
+- `Invoke-TrivyScan.ps1 -Format table` now writes `<report>.table.txt` (was `<report>.txt`).
+  The formats and their file extensions are defined once, in
+  `Get-TrivyFormatCatalog` (`scripts/lib/TrivyLab.ps1`).
 
 - Every Trivy invocation is printed as a flag / value table with repository-relative
   paths, including the coverage-matrix passes and `trivy convert`.
